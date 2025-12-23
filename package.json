@@ -1,6 +1,6 @@
 {
   "name": "usb-ud-co2s",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "This module provides I/O DATA USB device (UD-CO2S).",
   "main": "index.js",
   "scripts": {

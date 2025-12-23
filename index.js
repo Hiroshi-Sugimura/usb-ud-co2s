@@ -114,7 +114,7 @@ let udcd2s = {
 		// ユーザーにシリアルポート選択画面を表示して選択を待ち受ける
 		let portList = await udcd2s.getPortList();
 		let com = await portList.filter((p) => {
-			if (p.vendorId.toLowerCase() == '04d8' && p.productId.toLowerCase() == 'e95a') {  // Win ver.で大文字小文字表記違う感じなので
+			if (p.vendorId && p.productId && p.vendorId.toLowerCase() == '04d8' && p.productId.toLowerCase() == 'e95a') {  // Win ver.で大文字小文字表記違う感じなので
 				return p;
 			}
 		});
