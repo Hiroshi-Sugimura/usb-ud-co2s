@@ -60,7 +60,7 @@ let udcd2s = {
 				TMP: d[2].split('=')[1] // TMP
 			}
 		} catch (e) {
-			return {state:'error'};
+			return { state: 'error' };
 		}
 	},
 
@@ -165,7 +165,6 @@ let udcd2s = {
 		// USB外したりしたときの処理登録
 		udcd2s.port.on('close', function () {
 			if (udcd2s.port) {
-				udcd2s.port.close();
 				udcd2s.port = null;
 			}
 
