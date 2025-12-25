@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>Home - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Namespaces</h3><ul><li><a href="udcd2s.html">udcd2s</a><ul class='methods'><li data-type='method'><a href="udcd2s.html#.getPortList">getPortList</a></li><li data-type='method'><a href="udcd2s.html#.parseResponse">parseResponse</a></li><li data-type='method'><a href="udcd2s.html#.start">start</a></li><li data-type='method'><a href="udcd2s.html#.startRequestData">startRequestData</a></li><li data-type='method'><a href="udcd2s.html#.stop">stop</a></li><li data-type='method'><a href="udcd2s.html#.stopRequestData">stopRequestData</a></li></ul></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+
+    
+
+
+
+    
+
+
+    <section class="package">
+        <h3> </h3>		
+    </section>
+
+
+
+
+
+
+
+
+
+    
+
+
+
+    <section class="readme usertext">
+        <article><h1>Overview</h1>
+<p>このモジュールは**I/O DATAのUSB CO2センサ(UD-CO2S)**をサポートします．
+非公式ですので、本モジュールに関してOMRON社様に問い合わせなどは行わないようにお願いします．</p>
+<p>This module provides <strong>USB environment sensor (UD-CO2S) producted by I/O DATA</strong>.
+This module is informality.</p>
+<p>動作確認は UD-CO2 (https://www.iodata.jp/product/tsushin/iot/ud-co2s/index.htm) で行いました．</p>
+<h1>Install</h1>
+<p>次に下記コマンドでモジュールをインストールできます．</p>
+<p>You can install the module as following command.</p>
+<pre class="prettyprint source lang-bash"><code>npm i usb-ud-co2s
+</code></pre>
+<h1>Demos</h1>
+<h2>demo</h2>
+<p>Here is a demonstration script.</p>
+<pre class="prettyprint source lang-JavaScript:Demo"><code>'use strict';
+
+const udco2s = require('usb-ud-co2s');
+
+udco2s.start(  (res, error) => {
+	if( error ) {
+		console.error( '#', error );
+		return;
+	}
+
+	console.log( '----------------------------' );
+	let dt = new Date();
+	console.log( dt );
+	console.dir( res );
+} );
+</code></pre>
+<h1>Data stracture</h1>
+<pre class="prettyprint source lang-JavaScript:stracture"><code>{ state: 'OK' }
+</code></pre>
+<pre class="prettyprint source"><code>{ state: 'connected', CO2: '623', HUM: '52.5', TMP: '28.9' }
+</code></pre>
+<h1>APIs</h1>
+<h2>初期化と実行</h2>
+<ul>
+<li>start(callback)
+受信したらcallback関数を呼び出します。
+callback関数は下記の形式です。</li>
+</ul>
+<pre class="prettyprint source"><code>callback( sensorData, error )
+</code></pre>
+<ul>
+<li>stop()
+終了してportを開放します。</li>
+</ul>
+<h2>Authors</h2>
+<p>神奈川工科大学  創造工学部  ホームエレクトロニクス開発学科; Dept. of Home Electronics, Faculty of Creative Engineering, Kanagawa Institute of Technology</p>
+<p>杉村　博; SUGIMURA, Hiroshi</p>
+<h2>thanks</h2>
+<p>Thanks to Github users!</p>
+<ul>
+<li>参考にしたソース、Reference
+https://sokosun.tumblr.com/post/705952427815337984/io-data-ud-co2s</li>
+</ul>
+<h2>License</h2>
+<p>MIT License</p>
+<pre class="prettyprint source"><code>-- License summary --
+o Commercial use
+o Modification
+o Distribution
+o Private use
+x Liability
+x Warranty
+</code></pre>
+<h2>Log</h2>
+<ul>
+<li>1.1.0 testを追加してdebug</li>
+<li>1.0.2 Win ver. 変化対応</li>
+<li>1.0.1 少し手直し</li>
+<li>1.0.0 動作確認済み</li>
+<li>0.0.1 開発開始、公開</li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        
+            index.js
+        
+        </h2>
+        
+    
+</header>
+
+<article>
+    
+        <div class="container-overview">
+        
+            
+
+<dl class="details">
+    
+    <dt class="tag-description">Description:</dt>
+    <dd class="tag-description"><ul class="dummy"><li>I/O DATA USB-UD-CO2S driver</li></ul></dd>
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>Hiroshi SUGIMURA</li>
+        </ul>
+    </dd>
+    
+
+    
+    <dt class="tag-copyright">Copyright:</dt>
+    <dd class="tag-copyright"><ul class="dummy"><li>(C) Hiroshi SUGIMURA 2023.08.22</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+            
+                <div class="description usertext">I/O DATA USB-UD-CO2S driver</div>
+            
+
+            
+        
+        </div>
+    
+
+    
+
+    
+
+    
+    
+    
+
+     
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Thu Dec 25 2025 01:14:06 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

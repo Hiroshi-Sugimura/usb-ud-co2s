@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>index.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    
+    <h2><a href="index.html">Home</a></h2><h3>Namespaces</h3><ul><li><a href="udcd2s.html">udcd2s</a><ul class='methods'><li data-type='method'><a href="udcd2s.html#.getPortList">getPortList</a></li><li data-type='method'><a href="udcd2s.html#.parseResponse">parseResponse</a></li><li data-type='method'><a href="udcd2s.html#.start">start</a></li><li data-type='method'><a href="udcd2s.html#.startRequestData">startRequestData</a></li><li data-type='method'><a href="udcd2s.html#.stop">stop</a></li><li data-type='method'><a href="udcd2s.html#.stopRequestData">stopRequestData</a></li></ul></li></ul>
+    
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">index.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview I/O DATA USB-UD-CO2S driver
+ * @author Hiroshi SUGIMURA
+ * @copyright (C) Hiroshi SUGIMURA 2023.08.22
+ */
+'use strict';
+
+const { SerialPort } = require('serialport');
+const { ReadlineParser } = require('@serialport/parser-readline');
+
+
+/**
+ * UD-CO2S module object
+ * @namespace udcd2s
+ */
+let udcd2s = {
+	/** @type {function(Object, ?string): void} Callback function for events */
+	callback: null,
+	/** @type {Object} Serial port configuration */
+	portConfig: {
+		path: 'COM3',
+		baudRate: 115200,
+		dataBits: 8,
+		stopBits: 1,
+		parity: 'none'
+	},
+	/** @type {SerialPort} SerialPort instance */
+	port: null,
+
+	/**
+	 * リクエストデータ生成 (Uint8Array)
+	 * Command 'STA'
+	 * @returns {Uint8Array} Request data bytes
+	 */
+	startRequestData: function () {
+		// command 'STA'
+		const req_data = new Uint8Array([0x53, 0x54, 0x41, 0x0d, 0x0a]);
+		return req_data;
+	},
+
+	/**
+	 * 停止リクエストデータ生成
+	 * Command 'STP'
+	 * @returns {Uint8Array} Request data bytes
+	 */
+	stopRequestData: function () {
+		// command 'STP'
+		const req_data = new Uint8Array([0x53, 0x54, 0x50, 0x0d, 0x0a]);
+		return req_data;
+	},
+
+	/**
+	 * レスポンスをパース
+	 * @param {Buffer} recvData Received data from serial port
+	 * @returns {Object} Parsed result object (e.g. {state: 'OK'} or {state: 'connected', CO2: '...', ...})
+	 */
+	parseResponse: function (recvData) {
+		try {
+			// 初回接続、うまくいった
+			// recvData= &lt;Buffer 4f 4b 20 53 54 41 0d 0a>
+			// toString()= OK STA
+
+			// 定期的に関数がコールされて、このようなデータを受信する
+			// recvData= &lt;Buffer 43 4f 32 3d 36 30 36 2c 48 55 4d 3d 34 36 2e 35 2c 54 4d 50 3d 32 39 2e 38 0d 0a>
+			// toString()= CO2=606,HUM=46.5,TMP=29.8
+			// console.log(recvData);
+			let str = recvData.toString().split(/\r?\n/)[0];
+
+			if (str == 'OK STA') {
+				return { state: 'OK' };
+			}
+
+			let d = str.split(',');
+			return {
+				state: 'connected',
+				CO2: d[0].split('=')[1], // CO2
+				HUM: d[1].split('=')[1], // HUM
+				TMP: d[2].split('=')[1] // TMP
+			}
+		} catch (e) {
+			return { state: 'error' };
+		}
+	},
+
+
+	/**
+	 * シリアルポートのリスト取得
+	 * @returns {Promise&lt;Array>} List of available serial ports
+	 */
+	getPortList: async function () {
+		let portList = [];
+
+		await SerialPort.list()
+			.then((ports) => {
+				portList = ports;
+			}).catch((err) => {
+				console.log(err, "e")
+			});
+
+		return portList;
+	},
+
+	/**
+	 * センサー通信開始 (entry point)
+	 * @param {function(Object, ?string): void} callback Callback function to handle responses and errors
+	 * @param {Object} [options={}] Optional configuration (currently unused)
+	 * @returns {Promise&lt;void>}
+	 */
+	start: async function (callback, options = {}) {
+
+		if (udcd2s.port) {  // すでに通信している
+			if (udcd2s.callback) {
+				udcd2s.callback({ state: 'error' }, 'udcd2s.start(): port is used already.');
+			} else {
+				console.error('udcd2s Error: udcd2s.start(): port is used already.');
+			}
+			return;
+		}
+
+		udcd2s.portConfig = {  // default config set
+			path: 'COM3',
+			baudRate: 115200,
+			dataBits: 8,
+			stopBits: 1,
+			parity: 'none'
+		};
+		udcd2s.port = null;
+
+		if (callback) {
+			udcd2s.callback = callback;
+		} else {
+			console.log('Error: udcd2s.start(): callback is null.');
+			return;
+		}
+
+		// CO2センサーに接続
+		// ユーザーにシリアルポート選択画面を表示して選択を待ち受ける
+		let portList = await udcd2s.getPortList();
+		let com = await portList.filter((p) => {
+			if (p.vendorId &amp;&amp; p.productId &amp;&amp; p.vendorId.toLowerCase() == '04d8' &amp;&amp; p.productId.toLowerCase() == 'e95a') {  // Win ver.で大文字小文字表記違う感じなので
+				return p;
+			}
+		});
+
+		if (com.length == 0) {  // センサー見つからない、対象ポートがない
+			if (udcd2s.callback) {
+				udcd2s.callback({ state: 'error' }, 'udcd2s.start(): Sensor (UD-CO2S) is not found.');
+			} else {
+				console.error('udcd2s Error: udcd2s.start(): Sensor (UD-CO2S) is not found.');
+			}
+			return;
+		}
+
+		udcd2s.portConfig.path = com[0].path;  // センサー見つかった
+
+		udcd2s.port = new SerialPort(udcd2s.portConfig, function (err) {  // ポート利用開始
+			if (err) {
+				// エラー時はここで終了
+				if (udcd2s.callback) {
+					udcd2s.callback({ state: 'error' }, err);
+				} else {
+					console.error('udcd2s ' + err);
+				}
+				udcd2s.port = null;
+				// return; // 下の処理に進まないようにしたいが、コールバック内なので、
+				// 実は `new SerialPort` 直後の同期処理は走ってしまう。
+				// しかし `open` イベントリスナに処理を移すことで制御する。
+			}
+		});
+
+		// オープンイベントを待機して処理を開始
+		udcd2s.port.on('open', function () {
+			// データを行にする
+			const parser = new ReadlineParser({ delimiter: '\r\n' });
+			udcd2s.port.pipe(parser);
+
+			// データを受信したときの処理登録
+			parser.on('data', function (recvData) {
+				let r = udcd2s.parseResponse(recvData);
+				if (r) {
+					if (udcd2s.callback) {
+						udcd2s.callback(r, null);
+					} else {
+						console.dir(r);
+					}
+				} else {
+					if (udcd2s.callback) {
+						udcd2s.callback({ state: 'error' }, 'recvData is nothing.');
+					}
+				}
+			});
+
+			udcd2s.port.write(udcd2s.startRequestData());
+		});
+
+
+		// USB外したりしたときの処理登録
+		udcd2s.port.on('close', function () {
+			if (udcd2s.port) {
+				udcd2s.port = null;
+			}
+
+			if (udcd2s.callback) {
+				udcd2s.callback({ state: 'warning' }, 'port is closed.');
+				udcd2s.callback = null;
+			}
+		});
+	},
+
+	/**
+	 * 通信停止
+	 * @returns {Promise&lt;void>}
+	 */
+	stop: async function () {
+		if (udcd2s.port) {
+			// Write and Close should be promisified to wait for completion
+			await new Promise((resolve) => {
+				udcd2s.port.write(udcd2s.stopRequestData(), (err) => {
+					resolve();
+				});
+			});
+			await new Promise((resolve) => {
+				udcd2s.port.close((err) => {
+					resolve();
+				});
+			});
+			udcd2s.port = null;
+		}
+
+		if (udcd2s.callback) {
+			udcd2s.callback({ state: 'info' }, 'port is closed.');
+			udcd2s.callback = null;
+		}
+	}
+};
+
+
+module.exports = udcd2s;
+/**
+ * EOF
+ */
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.5</a> on Thu Dec 25 2025 01:14:06 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>
